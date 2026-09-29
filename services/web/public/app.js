@@ -4,10 +4,14 @@
 const $ = (sel) => document.querySelector(sel);
 const money = (cents, cur = "USD") =>
   new Intl.NumberFormat("en-US", { style: "currency", currency: cur }).format(cents / 100);
+// crypto.randomUUID() exists only in secure contexts (HTTPS/localhost); the
+// demo runs on the plain-HTTP ALB hostname, so build ids from getRandomValues.
+const randomId = (len) =>
+  Array.from(crypto.getRandomValues(new Uint8Array(len)), (b) => b.toString(16).padStart(2, "0")).join("").slice(0, len);
 const colors = ["#1f6feb", "#8250df", "#bf3989", "#cf222e", "#bc4c00", "#4d2d00", "#1a7f37", "#0969da"];
 
 // One anonymous cart per browser
-const cartId = localStorage.getItem("shopstack.cart") || crypto.randomUUID().slice(0, 12);
+const cartId = localStorage.getItem("shopstack.cart") || randomId(12);
 localStorage.setItem("shopstack.cart", cartId);
 
 let products = [];
@@ -15,7 +19,7 @@ let cart = null;
 
 /* ---------- HTTP ---------- */
 async function api(method, path, body) {
-  const rid = crypto.randomUUID().slice(0, 16);
+  const rid = randomId(16);
   const res = await fetch(path, {
     method,
     headers: { "content-type": "application/json", "x-request-id": rid },
