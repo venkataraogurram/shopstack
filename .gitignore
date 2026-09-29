@@ -16,7 +16,6 @@ terraform/tfplan
 
 # generated at deploy time
 k8s/rendered/
-docs/evidence/*.log
 
 # deploy-time kustomize overlay
 .deploy/

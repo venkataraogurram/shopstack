@@ -25,6 +25,15 @@ module "eks" {
     vpc-cni = {
       before_compute = true
       most_recent    = true
+      # Prefix delegation hands each ENI /28 prefixes instead of single IPs,
+      # lifting the pod ceiling on small instances (t3.medium: 17 -> 110).
+      # Without it an HPA scale-out stalled with "0/2 nodes: Too many pods".
+      configuration_values = jsonencode({
+        env = {
+          ENABLE_PREFIX_DELEGATION = "true"
+          WARM_PREFIX_TARGET       = "1"
+        }
+      })
     }
     kube-proxy = {
       before_compute = true
@@ -42,6 +51,20 @@ module "eks" {
     }
     amazon-cloudwatch-observability = {
       most_recent = true
+      # v6+ enables Application Signals "auto-monitor" by default, which mutates
+      # every pod to inject OpenTelemetry init containers. Those containers do
+      # not satisfy the "restricted" Pod Security Standard enforced on the
+      # shopstack namespace, so pod creation is rejected. Keep Container
+      # Insights + log shipping; turn off automatic instrumentation.
+      configuration_values = jsonencode({
+        manager = {
+          applicationSignals = {
+            autoMonitor = {
+              monitorAllServices = false
+            }
+          }
+        }
+      })
       pod_identity_association = [{
         role_arn        = module.cloudwatch_observability_pod_identity.iam_role_arn
         service_account = "cloudwatch-agent"
@@ -61,6 +84,21 @@ module "eks" {
       desired_size = var.node_group_size.desired
 
       subnet_ids = module.vpc.private_subnets
+
+      # Pair with VPC CNI prefix delegation above: kubelet must also be told it
+      # may schedule more pods than the ENI/IP formula allows.
+      cloudinit_pre_nodeadm = [{
+        content_type = "application/node.eks.aws"
+        content      = <<-EOT
+          ---
+          apiVersion: node.eks.aws/v1alpha1
+          kind: NodeConfig
+          spec:
+            kubelet:
+              config:
+                maxPods: 110
+        EOT
+      }]
 
       metadata_options = {
         http_tokens                 = "required" # IMDSv2 only

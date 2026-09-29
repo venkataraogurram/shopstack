@@ -1,0 +1,42 @@
+flowchart TB
+    user((Shopper / API client))
+    gh["GitHub Actions<br/>test → build → push image :sha (OIDC)"]
+
+    subgraph aws["AWS account · us-east-1 · everything below is Terraform-managed"]
+        direction TB
+        ecr["Amazon ECR<br/>shopstack/catalog · cart · order<br/>immutable tags · scan on push"]
+
+        subgraph vpc["VPC 10.20.0.0/16 · 2 AZs"]
+            direction TB
+            subgraph pub["Public subnets"]
+                alb["Application Load Balancer · HTTP :80<br/>/catalog/* → catalog · /cart/* → cart · /orders/* → order"]
+            end
+            subgraph priv["Private subnets"]
+                subgraph eks["Amazon EKS 1.34 · managed node group t3.medium ×2–4"]
+                    direction TB
+                    subgraph ns["namespace shopstack · Pod Security Standard: restricted"]
+                        direction LR
+                        catalog["catalog<br/>Deployment ×2–6 · HPA · PDB<br/>probes · requests/limits"]
+                        cart["cart<br/>Deployment ×2–6 · HPA · PDB<br/>probes · requests/limits"]
+                        order["order<br/>Deployment ×2–6 · HPA · PDB<br/>probes · requests/limits"]
+                    end
+                    addons["kube-system: AWS Load Balancer Controller (Helm) · metrics-server · CoreDNS · Pod Identity Agent<br/>amazon-cloudwatch: Container Insights + Fluent Bit"]
+                end
+            end
+        end
+
+        ddb_c[("DynamoDB<br/>shopstack-carts")]
+        ddb_o[("DynamoDB<br/>shopstack-orders")]
+        cw["CloudWatch<br/>Logs · Container Insights"]
+    end
+
+    user -->|HTTP| alb
+    alb -->|"target-type: ip (pod IPs)"| ns
+    order -->|"http://cart"| cart
+    cart -->|"http://catalog"| catalog
+    order -->|"http://catalog"| catalog
+    cart -->|"Pod Identity role shopstack-cart<br/>GetItem · UpdateItem · DeleteItem"| ddb_c
+    order -->|"Pod Identity role shopstack-order<br/>PutItem · GetItem"| ddb_o
+    addons -->|"logs + metrics"| cw
+    gh -->|"push"| ecr
+    ecr -.->|"pull"| eks

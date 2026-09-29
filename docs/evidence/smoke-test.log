@@ -1,0 +1,12 @@
+==> catalog
+  8 products
+==> add two items to cart smoke-1790687868
+  subtotal_cents 3998
+  subtotal_cents 10997
+==> out-of-stock SKU is rejected (expect 409)
+  409
+==> checkout
+  order 2069D51001C1 total_cents 10997 status CREATED
+==> read order back (expect 200) and confirm cart was cleared (expect 404)
+  order=200 cart=404
+==> smoke test passed (request id smoke-1790687868)

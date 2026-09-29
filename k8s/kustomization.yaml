@@ -20,15 +20,6 @@ configMapGenerator:
     files:
       - products.json=config/products.json
 
-# Image references are rewritten at deploy time by scripts/deploy.sh
-# (kustomize edit set image ...). Values below are placeholders.
-images:
-  - name: shopstack/catalog
-    newName: 904233106520.dkr.ecr.us-east-1.amazonaws.com/shopstack/catalog
-    newTag: dev
-  - name: shopstack/cart
-    newName: 904233106520.dkr.ecr.us-east-1.amazonaws.com/shopstack/cart
-    newTag: dev
-  - name: shopstack/order
-    newName: 904233106520.dkr.ecr.us-east-1.amazonaws.com/shopstack/order
-    newTag: dev
+# Deployments reference placeholder images (shopstack/<service>:dev). The ECR
+# registry and the immutable image tag are supplied at deploy time by an
+# overlay that scripts/deploy.sh generates, so no account ID lives in git.

@@ -1,0 +1,79 @@
+==> starting 8 in-cluster load generators for 150s against catalog
+--- 18:48:12
+catalog   Deployment/catalog   cpu: 2%/60%   2     6     2     35m
+  catalog-86cfc5b56f-7v6w5 Running
+  catalog-86cfc5b56f-xhzdt Running
+--- 18:48:32
+catalog   Deployment/catalog   cpu: 248%/60%   2     6     2     35m
+  catalog-86cfc5b56f-54zwf Running
+  catalog-86cfc5b56f-7v2c8 Running
+  catalog-86cfc5b56f-7v6w5 Running
+  catalog-86cfc5b56f-fmjgf Running
+  catalog-86cfc5b56f-slhqw Running
+  catalog-86cfc5b56f-xhzdt Running
+--- 18:48:51
+catalog   Deployment/catalog   cpu: 441%/60%   2     6     6     35m
+  catalog-86cfc5b56f-54zwf Running
+  catalog-86cfc5b56f-7v2c8 Running
+  catalog-86cfc5b56f-7v6w5 Running
+  catalog-86cfc5b56f-fmjgf Running
+  catalog-86cfc5b56f-slhqw Running
+  catalog-86cfc5b56f-xhzdt Running
+--- 18:49:11
+catalog   Deployment/catalog   cpu: 245%/60%   2     6     6     36m
+  catalog-86cfc5b56f-54zwf Running
+  catalog-86cfc5b56f-7v2c8 Running
+  catalog-86cfc5b56f-7v6w5 Running
+  catalog-86cfc5b56f-fmjgf Running
+  catalog-86cfc5b56f-slhqw Running
+  catalog-86cfc5b56f-xhzdt Running
+--- 18:49:31
+catalog   Deployment/catalog   cpu: 172%/60%   2     6     6     36m
+  catalog-86cfc5b56f-54zwf Running
+  catalog-86cfc5b56f-7v2c8 Running
+  catalog-86cfc5b56f-7v6w5 Running
+  catalog-86cfc5b56f-fmjgf Running
+  catalog-86cfc5b56f-slhqw Running
+  catalog-86cfc5b56f-xhzdt Running
+--- 18:49:51
+catalog   Deployment/catalog   cpu: 167%/60%   2     6     6     36m
+  catalog-86cfc5b56f-54zwf Running
+  catalog-86cfc5b56f-7v2c8 Running
+  catalog-86cfc5b56f-7v6w5 Running
+  catalog-86cfc5b56f-fmjgf Running
+  catalog-86cfc5b56f-slhqw Running
+  catalog-86cfc5b56f-xhzdt Running
+--- 18:50:11
+catalog   Deployment/catalog   cpu: 170%/60%   2     6     6     37m
+  catalog-86cfc5b56f-54zwf Running
+  catalog-86cfc5b56f-7v2c8 Running
+  catalog-86cfc5b56f-7v6w5 Running
+  catalog-86cfc5b56f-fmjgf Running
+  catalog-86cfc5b56f-slhqw Running
+  catalog-86cfc5b56f-xhzdt Running
+--- 18:50:30
+catalog   Deployment/catalog   cpu: 169%/60%   2     6     6     37m
+  catalog-86cfc5b56f-54zwf Running
+  catalog-86cfc5b56f-7v2c8 Running
+  catalog-86cfc5b56f-7v6w5 Running
+  catalog-86cfc5b56f-fmjgf Running
+  catalog-86cfc5b56f-slhqw Running
+  catalog-86cfc5b56f-xhzdt Running
+--- 18:50:50
+catalog   Deployment/catalog   cpu: 167%/60%   2     6     6     37m
+  catalog-86cfc5b56f-54zwf Running
+  catalog-86cfc5b56f-7v2c8 Running
+  catalog-86cfc5b56f-7v6w5 Running
+  catalog-86cfc5b56f-fmjgf Running
+  catalog-86cfc5b56f-slhqw Running
+  catalog-86cfc5b56f-xhzdt Running
+--- 18:51:10
+catalog   Deployment/catalog   cpu: 82%/60%   2     6     6     38m
+  catalog-86cfc5b56f-54zwf Running
+  catalog-86cfc5b56f-7v2c8 Running
+  catalog-86cfc5b56f-7v6w5 Running
+  catalog-86cfc5b56f-fmjgf Running
+  catalog-86cfc5b56f-slhqw Running
+  catalog-86cfc5b56f-xhzdt Running
+==> cleaning up load generators
+==> done; the HPA scales back down after its 120s stabilization window

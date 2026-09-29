@@ -1,0 +1,66 @@
+$ kubectl get nodes -o wide
+NAME                          STATUS   ROLES    AGE   VERSION                INTERNAL-IP   EXTERNAL-IP   OS-IMAGE                        KERNEL-VERSION                     CONTAINER-RUNTIME
+ip-10-20-31-44.ec2.internal   Ready    <none>   14m   v1.34.11-eks-f4fc4f1   10.20.31.44   <none>        Amazon Linux 2023.12.20260918   6.12.103-129.197.amzn2023.x86_64   containerd://2.2.7+unknown
+ip-10-20-5-1.ec2.internal     Ready    <none>   14m   v1.34.11-eks-f4fc4f1   10.20.5.1     <none>        Amazon Linux 2023.12.20260918   6.12.103-129.197.amzn2023.x86_64   containerd://2.2.7+unknown
+
+$ kubectl -n shopstack get all,ingress,pdb
+NAME                           READY   STATUS    RESTARTS   AGE
+pod/cart-546bf6b7b8-7db7v      1/1     Running   0          12m
+pod/cart-546bf6b7b8-q8jpj      1/1     Running   0          11m
+pod/catalog-86cfc5b56f-54zwf   1/1     Running   0          3m41s
+pod/catalog-86cfc5b56f-7v2c8   1/1     Running   0          3m41s
+pod/catalog-86cfc5b56f-7v6w5   1/1     Running   0          12m
+pod/catalog-86cfc5b56f-fmjgf   1/1     Running   0          3m41s
+pod/catalog-86cfc5b56f-slhqw   1/1     Running   0          3m41s
+pod/catalog-86cfc5b56f-xhzdt   1/1     Running   0          11m
+pod/order-6c6cf4bb94-4qj47     1/1     Running   0          12m
+pod/order-6c6cf4bb94-7w7ww     1/1     Running   0          8m42s
+
+NAME              TYPE        CLUSTER-IP       EXTERNAL-IP   PORT(S)   AGE
+service/cart      ClusterIP   172.20.207.11    <none>        80/TCP    39m
+service/catalog   ClusterIP   172.20.110.90    <none>        80/TCP    39m
+service/order     ClusterIP   172.20.114.105   <none>        80/TCP    39m
+
+NAME                      READY   UP-TO-DATE   AVAILABLE   AGE
+deployment.apps/cart      2/2     2            2           39m
+deployment.apps/catalog   6/6     6            6           39m
+deployment.apps/order     2/2     2            2           39m
+
+NAME                                 DESIRED   CURRENT   READY   AGE
+replicaset.apps/cart-546bf6b7b8      2         2         2       29m
+replicaset.apps/cart-69b565689b      0         0         0       31m
+replicaset.apps/cart-69d556f9bd      0         0         0       39m
+replicaset.apps/catalog-67d68d49dc   0         0         0       39m
+replicaset.apps/catalog-69f78f5d55   0         0         0       31m
+replicaset.apps/catalog-86cfc5b56f   6         6         6       29m
+replicaset.apps/order-6c6cf4bb94     2         2         2       29m
+replicaset.apps/order-6f7fffdff4     0         0         0       39m
+replicaset.apps/order-7c96f87b4b     0         0         0       31m
+
+NAME                                          REFERENCE            TARGETS       MINPODS   MAXPODS   REPLICAS   AGE
+horizontalpodautoscaler.autoscaling/cart      Deployment/cart      cpu: 2%/60%   2         6         2          39m
+horizontalpodautoscaler.autoscaling/catalog   Deployment/catalog   cpu: 2%/60%   2         6         6          39m
+horizontalpodautoscaler.autoscaling/order     Deployment/order     cpu: 2%/60%   2         6         2          39m
+
+NAME                                  CLASS   HOSTS   ADDRESS                                                                   PORTS   AGE
+ingress.networking.k8s.io/shopstack   alb     *       k8s-shopstac-shopstac-74660dbaab-1502118291.us-east-1.elb.amazonaws.com   80      39m
+
+NAME                                 MIN AVAILABLE   MAX UNAVAILABLE   ALLOWED DISRUPTIONS   AGE
+poddisruptionbudget.policy/cart      1               N/A               1                     39m
+poddisruptionbudget.policy/catalog   1               N/A               5                     39m
+poddisruptionbudget.policy/order     1               N/A               1                     39m
+
+$ kubectl -n kube-system get deploy aws-load-balancer-controller metrics-server
+NAME                           READY   UP-TO-DATE   AVAILABLE   AGE
+aws-load-balancer-controller   2/2     2            2           40m
+metrics-server                 2/2     2            2           45m
+
+$ aws eks list-pod-identity-associations --cluster-name shopstack
+-------------------------------------------------------
+|             ListPodIdentityAssociations             |
++--------------------+--------------------------------+
+|  amazon-cloudwatch |  cloudwatch-agent              |
+|  shopstack         |  order                         |
+|  kube-system       |  aws-load-balancer-controller  |
+|  shopstack         |  cart                          |
++--------------------+--------------------------------+

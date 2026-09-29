@@ -144,8 +144,8 @@ async def create_order(body: Checkout):
     }
     try:
         store.create(order)
-    except DuplicateOrder:
-        raise HTTPException(status_code=500, detail="order id collision, retry")
+    except DuplicateOrder as e:
+        raise HTTPException(status_code=500, detail="order id collision, retry") from e
 
     try:
         await cart_client.delete(f"/cart/{body.cart_id}", headers=_headers())
