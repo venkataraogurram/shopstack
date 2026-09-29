@@ -6,7 +6,7 @@ Three small retail services (**catalog**, **cart**, **order**) built with FastAP
 
 The point of the project is the platform work, not the shop: least-privilege IAM at pod level, hardened pods, autoscaling, and observability wired so that one request ID can be followed through every service in CloudWatch.
 
-**Live demo:** http://k8s-shopstac-shopstac-74660dbaab-1502118291.us-east-1.elb.amazonaws.com (plain HTTP on the ALB hostname; the cluster is torn down between demo periods, so the link may be offline).
+**Live demo:** deployed on demand, not left running (about $6/day otherwise). `scripts/deploy.sh` prints the ALB URL; see [Redeploy for a demo](#redeploy-for-a-demo) for the 20-minute bring-up.
 
 ![Architecture](docs/architecture.svg)
 
@@ -91,6 +91,25 @@ scripts/load-test.sh  http://<alb-hostname> 240 8
 # 6. Everything off (ALB first, then the cluster)
 scripts/teardown.sh
 ```
+
+### Redeploy for a demo
+
+After `scripts/teardown.sh` nothing is left in the account (ECR repositories and images included), so a demo bring-up is steps 1–4 again, about 20 minutes end to end:
+
+```bash
+cd terraform && terraform init && terraform apply -auto-approve && cd ..   # ~15 min
+scripts/install-addons.sh                                                   # ~2 min
+TAG=$(scripts/build-push.sh | tail -1)                                      # ~3 min, or push a commit and let CI publish
+scripts/deploy.sh "$TAG"                                                    # ~3 min, prints the new ALB URL
+scripts/smoke-test.sh "$(kubectl -n shopstack get ingress shopstack -o jsonpath='http://{.status.loadBalancer.ingress[0].hostname}')"
+```
+
+Notes for the rerun:
+
+- The ALB hostname is new every time; there is no fixed domain by design.
+- Terraform recreates the IAM role and GitHub OIDC provider with the same names, so the `AWS_ROLE_ARN` repository variable stays valid and CI works again as soon as `terraform apply` finishes. To deploy a CI-built image instead of a local build, use `scripts/deploy.sh $(git rev-parse HEAD)` after the workflow is green.
+- Terraform state is local (`terraform/terraform.tfstate`); keep the directory, or import nothing and start clean, since every resource name is deterministic.
+- Tear down again with `scripts/teardown.sh` (type `destroy` at the prompt). It also removes the four `/aws/containerinsights/shopstack/*` log groups that the CloudWatch add-on creates outside Terraform.
 
 CI needs one repository variable: `AWS_ROLE_ARN` = the `github_actions_role_arn` Terraform output. The role trusts only the `main` branch of this repository (both the classic and the immutable GitHub OIDC subject formats, see fix 4 below).
 

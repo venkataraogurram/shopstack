@@ -23,4 +23,10 @@ helm -n kube-system uninstall aws-load-balancer-controller 2>/dev/null || true
 log "terraform destroy"
 terraform -chdir="$TF_DIR" destroy -auto-approve
 
+# The CloudWatch Observability add-on creates these outside Terraform.
+log "removing Container Insights log groups"
+for g in application dataplane host performance; do
+  aws logs delete-log-group --region "$AWS_REGION" --log-group-name "/aws/containerinsights/${PROJECT}/${g}" 2>/dev/null || true
+done
+
 log "teardown complete"
