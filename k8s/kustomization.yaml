@@ -1,0 +1,34 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: shopstack
+
+resources:
+  - namespace.yaml
+  - serviceaccounts.yaml
+  - configmap.yaml
+  - catalog.yaml
+  - cart.yaml
+  - order.yaml
+  - ingress.yaml
+
+# The product list is mounted into the catalog pods; edit config/products.json
+# and re-apply to change the catalog without rebuilding the image. The hash
+# suffix forces a rolling restart whenever the content changes.
+configMapGenerator:
+  - name: catalog-products
+    files:
+      - products.json=config/products.json
+
+# Image references are rewritten at deploy time by scripts/deploy.sh
+# (kustomize edit set image ...). Values below are placeholders.
+images:
+  - name: shopstack/catalog
+    newName: 904233106520.dkr.ecr.us-east-1.amazonaws.com/shopstack/catalog
+    newTag: dev
+  - name: shopstack/cart
+    newName: 904233106520.dkr.ecr.us-east-1.amazonaws.com/shopstack/cart
+    newTag: dev
+  - name: shopstack/order
+    newName: 904233106520.dkr.ecr.us-east-1.amazonaws.com/shopstack/order
+    newTag: dev

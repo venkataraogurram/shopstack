@@ -1,0 +1,25 @@
+# Local development only. Run with: finch compose up --build
+# All three services use the in-memory store; no AWS access is needed.
+services:
+  catalog:
+    build: ./services/catalog
+    ports: ["9081:8080"]
+    environment:
+      LOG_LEVEL: INFO
+
+  cart:
+    build: ./services/cart
+    ports: ["9082:8080"]
+    environment:
+      STORE_BACKEND: memory
+      CATALOG_URL: http://catalog:8080
+    depends_on: [catalog]
+
+  order:
+    build: ./services/order
+    ports: ["9083:8080"]
+    environment:
+      STORE_BACKEND: memory
+      CART_URL: http://cart:8080
+      CATALOG_URL: http://catalog:8080
+    depends_on: [cart, catalog]

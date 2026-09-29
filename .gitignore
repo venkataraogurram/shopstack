@@ -1,0 +1,22 @@
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+.ruff_cache/
+.DS_Store
+
+# Terraform
+terraform/.terraform/
+terraform/*.tfstate
+terraform/*.tfstate.*
+terraform/*.tfvars
+!terraform/example.tfvars
+terraform/.terraform.lock.hcl
+terraform/tfplan
+
+# generated at deploy time
+k8s/rendered/
+docs/evidence/*.log
+
+# deploy-time kustomize overlay
+.deploy/

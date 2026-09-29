@@ -1,0 +1,20 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: shopstack-config
+  namespace: shopstack
+  labels:
+    app.kubernetes.io/part-of: shopstack
+data:
+  # Service discovery through cluster DNS (Service name resolves inside the namespace)
+  CATALOG_URL: http://catalog
+  CART_URL: http://cart
+  # Persistence
+  STORE_BACKEND: dynamodb
+  CART_TABLE: shopstack-carts
+  ORDER_TABLE: shopstack-orders
+  AWS_REGION: us-east-1
+  # Runtime
+  LOG_LEVEL: INFO
+  HTTP_TIMEOUT_SECONDS: "2.0"
+  CURRENCY: USD

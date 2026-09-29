@@ -1,0 +1,109 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+env:
+  AWS_REGION: us-east-1
+  PYTHON_VERSION: "3.12"
+
+jobs:
+  test:
+    name: Lint & test (${{ matrix.service }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        service: [catalog, cart, order]
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: pip
+          cache-dependency-path: |
+            services/${{ matrix.service }}/requirements.txt
+            services/requirements-dev.txt
+
+      - name: Install dependencies
+        run: pip install -r services/${{ matrix.service }}/requirements.txt -r services/requirements-dev.txt
+
+      - name: Ruff
+        working-directory: services/${{ matrix.service }}
+        run: |
+          ruff check --config ../../pyproject.toml .
+          ruff format --check --config ../../pyproject.toml .
+
+      - name: Pytest
+        working-directory: services/${{ matrix.service }}
+        run: pytest -q
+
+  validate-infra:
+    name: Validate Terraform & manifests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: "1.15.2"
+
+      - name: Terraform fmt & validate
+        working-directory: terraform
+        run: |
+          terraform fmt -check -recursive
+          terraform init -backend=false -input=false
+          terraform validate
+
+      - name: Render Kubernetes manifests
+        run: kubectl kustomize k8s > /dev/null
+
+  build-push:
+    name: Build & push (${{ matrix.service }})
+    needs: [test, validate-infra]
+    # Images are only published from main; pull requests stop at tests.
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write # required for OIDC federation to AWS
+    strategy:
+      matrix:
+        service: [catalog, cart, order]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configure AWS credentials (OIDC, no stored keys)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ vars.AWS_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Log in to Amazon ECR
+        id: ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - uses: docker/setup-buildx-action@v3
+
+      - name: Build and push
+        uses: docker/build-push-action@v6
+        with:
+          context: services/${{ matrix.service }}
+          platforms: linux/amd64
+          push: true
+          provenance: false
+          build-args: APP_VERSION=${{ github.sha }}
+          # Repository tags are immutable, so every commit gets its own tag.
+          tags: ${{ steps.ecr.outputs.registry }}/shopstack/${{ matrix.service }}:${{ github.sha }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Summary
+        run: echo "Pushed shopstack/${{ matrix.service }}:${{ github.sha }} — deploy with scripts/deploy.sh ${{ github.sha }}" >> "$GITHUB_STEP_SUMMARY"

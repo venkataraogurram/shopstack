@@ -1,0 +1,10 @@
+[
+  {"sku": "TSH-001", "name": "Classic Cotton T-Shirt", "description": "Unisex crew neck, 100% cotton", "unit_price_cents": 1999},
+  {"sku": "JNS-002", "name": "Slim Fit Jeans", "description": "Stretch denim, mid-rise", "unit_price_cents": 5499},
+  {"sku": "SNK-003", "name": "Everyday Sneakers", "description": "Lightweight canvas sneakers", "unit_price_cents": 6999},
+  {"sku": "CAP-004", "name": "Baseball Cap", "description": "Adjustable strap, embroidered logo", "unit_price_cents": 1499},
+  {"sku": "HDY-005", "name": "Fleece Hoodie", "description": "Heavyweight fleece, kangaroo pocket", "unit_price_cents": 4499},
+  {"sku": "SCK-006", "name": "Ankle Socks (3-pack)", "description": "Cushioned sole", "unit_price_cents": 999},
+  {"sku": "BLT-007", "name": "Leather Belt", "description": "Full-grain leather, brass buckle", "unit_price_cents": 2999, "in_stock": false},
+  {"sku": "BAG-008", "name": "Canvas Tote Bag", "description": "Reinforced handles", "unit_price_cents": 2499}
+]

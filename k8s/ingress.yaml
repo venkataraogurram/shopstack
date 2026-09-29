@@ -1,0 +1,51 @@
+# One internet-facing Application Load Balancer, provisioned by the AWS Load
+# Balancer Controller, routing by path prefix to the three services.
+# Target type "ip" registers pod IPs directly (no NodePort hop).
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: shopstack
+  namespace: shopstack
+  labels:
+    app.kubernetes.io/part-of: shopstack
+  annotations:
+    alb.ingress.kubernetes.io/scheme: internet-facing
+    alb.ingress.kubernetes.io/target-type: ip
+    alb.ingress.kubernetes.io/listen-ports: '[{"HTTP": 80}]'
+    alb.ingress.kubernetes.io/healthcheck-interval-seconds: "15"
+    alb.ingress.kubernetes.io/healthy-threshold-count: "2"
+    alb.ingress.kubernetes.io/unhealthy-threshold-count: "2"
+    alb.ingress.kubernetes.io/success-codes: "200"
+    alb.ingress.kubernetes.io/target-group-attributes: deregistration_delay.timeout_seconds=30
+    alb.ingress.kubernetes.io/load-balancer-attributes: idle_timeout.timeout_seconds=60
+    alb.ingress.kubernetes.io/tags: Project=shopstack,ManagedBy=aws-load-balancer-controller
+    # To serve HTTPS: request an ACM certificate, then add
+    #   alb.ingress.kubernetes.io/listen-ports: '[{"HTTP": 80}, {"HTTPS": 443}]'
+    #   alb.ingress.kubernetes.io/certificate-arn: arn:aws:acm:...
+    #   alb.ingress.kubernetes.io/ssl-redirect: "443"
+spec:
+  ingressClassName: alb
+  rules:
+    - http:
+        paths:
+          - path: /catalog
+            pathType: Prefix
+            backend:
+              service:
+                name: catalog
+                port:
+                  name: http
+          - path: /cart
+            pathType: Prefix
+            backend:
+              service:
+                name: cart
+                port:
+                  name: http
+          - path: /orders
+            pathType: Prefix
+            backend:
+              service:
+                name: order
+                port:
+                  name: http
