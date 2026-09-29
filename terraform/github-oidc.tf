@@ -65,9 +65,15 @@ resource "aws_iam_role" "github_actions" {
 
 data "aws_iam_policy_document" "github_ecr_push" {
   statement {
-    sid       = "EcrLogin"
-    actions   = ["ecr:GetAuthorizationToken"]
-    resources = ["*"] # this action does not support resource-level scoping
+    sid = "EcrLogin"
+    actions = [
+      "ecr:GetAuthorizationToken",
+      # Authenticated pulls of public base images (python, nginx) from ECR
+      # Public; anonymous pulls from shared CI runners hit the rate limit.
+      "ecr-public:GetAuthorizationToken",
+      "sts:GetServiceBearerToken",
+    ]
+    resources = ["*"] # these actions do not support resource-level scoping
   }
 
   statement {

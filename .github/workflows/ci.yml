@@ -48,6 +48,9 @@ jobs:
   validate-infra:
     name: Validate Terraform & manifests
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
     steps:
       - uses: actions/checkout@v4
 
@@ -64,6 +67,17 @@ jobs:
 
       - name: Render Kubernetes manifests
         run: kubectl kustomize k8s > /dev/null
+
+      - name: Configure AWS credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ vars.AWS_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Log in to Amazon ECR Public (base images)
+        uses: aws-actions/amazon-ecr-login@v2
+        with:
+          registry-type: public
 
       - name: Nginx config test (web)
         run: |
@@ -100,6 +114,11 @@ jobs:
       - name: Log in to Amazon ECR
         id: ecr
         uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Log in to Amazon ECR Public (base images)
+        uses: aws-actions/amazon-ecr-login@v2
+        with:
+          registry-type: public
 
       - uses: docker/setup-buildx-action@v3
 
