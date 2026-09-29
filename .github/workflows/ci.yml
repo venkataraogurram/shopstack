@@ -9,6 +9,12 @@ on:
 permissions:
   contents: read
 
+# One run per branch at a time; a newer push cancels the older run so two
+# runs never race on the same immutable ECR tag.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
 env:
   AWS_REGION: us-east-1
   PYTHON_VERSION: "3.12"
@@ -120,9 +126,23 @@ jobs:
         with:
           registry-type: public
 
+      # Tags are immutable, so a re-run of an already-published commit must
+      # not try to push again.
+      - name: Check whether this tag is already published
+        id: exists
+        run: |
+          if aws ecr describe-images --repository-name shopstack/${{ matrix.service }} \
+               --image-ids imageTag=${{ github.sha }} >/dev/null 2>&1; then
+            echo "published=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "published=false" >> "$GITHUB_OUTPUT"
+          fi
+
       - uses: docker/setup-buildx-action@v3
+        if: steps.exists.outputs.published == 'false'
 
       - name: Build and push
+        if: steps.exists.outputs.published == 'false'
         uses: docker/build-push-action@v6
         with:
           context: services/${{ matrix.service }}
