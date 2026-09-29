@@ -2,11 +2,15 @@
 
 [![CI](https://github.com/venkataraogurram/shopstack/actions/workflows/ci.yml/badge.svg)](https://github.com/venkataraogurram/shopstack/actions/workflows/ci.yml)
 
-Three small retail services (**catalog**, **cart**, **order**) built with FastAPI, containerized, and run on Amazon EKS behind an Application Load Balancer. Everything from the VPC to the IAM roles is Terraform; the app is deployed with Kustomize; images are built and pushed by GitHub Actions.
+Three small retail services (**catalog**, **cart**, **order**) built with FastAPI plus a static **web** storefront on Nginx, containerized, and run on Amazon EKS behind one Application Load Balancer. Everything from the VPC to the IAM roles is Terraform; the app is deployed with Kustomize; images are built and pushed by GitHub Actions.
 
 The point of the project is the platform work, not the shop: least-privilege IAM at pod level, hardened pods, autoscaling, and observability wired so that one request ID can be followed through every service in CloudWatch.
 
 ![Architecture](docs/architecture.svg)
+
+| Storefront | Checkout |
+|---|---|
+| ![Storefront](docs/storefront-home.png) | ![Order](docs/storefront-order.png) |
 
 ## What is in the box
 
@@ -30,6 +34,7 @@ The point of the project is the platform work, not the shop: least-privilege IAM
 | `catalog` | `GET /catalog/products`, `GET /catalog/products/{sku}` | — | none |
 | `cart` | `GET /cart/{id}`, `POST /cart/{id}/items`, `DELETE /cart/{id}/items/{sku}`, `DELETE /cart/{id}` | catalog (validate SKU, snapshot price) | `dynamodb:GetItem/UpdateItem/DeleteItem` on carts table |
 | `order` | `POST /orders`, `GET /orders/{id}` | cart (read + clear), catalog (re-price, stock check) | `dynamodb:PutItem/GetItem` on orders table |
+| `web` | `GET /` storefront (vanilla HTML/JS on unprivileged Nginx, UID 101) | the three APIs via the same origin | none |
 
 All services expose `/healthz` (liveness) and `/ready` (readiness, checks the store), listen on 8080, log JSON to stdout, and accept/propagate `X-Request-ID`. Prices are integer cents end to end.
 
@@ -48,6 +53,7 @@ $ curl -s -X POST $ALB/orders -H 'content-type: application/json' -d '{"cart_id"
 
 ```
 services/<catalog|cart|order>/   FastAPI app, Dockerfile, tests (pytest), requirements
+services/web/                     Static storefront + Nginx config (no build step)
 terraform/                        VPC, EKS + add-ons, ECR, DynamoDB, Pod Identity roles, GitHub OIDC role
 k8s/                              Kustomize base: namespace, SAs, ConfigMaps, Deployments, Services, HPAs, PDBs, Ingress
 scripts/                          build-push, install-addons, deploy, smoke-test, load-test, teardown
@@ -61,7 +67,7 @@ compose.yaml                      run all three services locally (in-memory stor
 Prerequisites: AWS CLI v2 with credentials, Terraform ≥ 1.6, kubectl, Helm, and Docker or Finch.
 
 ```bash
-# 0. Local only (no AWS): three containers on :9081/:9082/:9083
+# 0. Local only (no AWS): storefront on http://localhost:9080 (APIs also on :9081/:9082/:9083)
 finch compose up --build            # or: docker compose up --build
 
 # 1. Infrastructure (~15 min; creates VPC, EKS, ECR, DynamoDB, IAM)
@@ -90,6 +96,7 @@ CI needs one repository variable: `AWS_ROLE_ARN` = the `github_actions_role_arn`
 
 Recorded against the deployed cluster (us-east-1) — see [`docs/evidence/`](docs/evidence/).
 
+- **Storefront**: `GET /` serves the page from the `web` pods (`X-Served-By: web-…` shows which one); the browser flow add → cart → checkout → order lookup was driven with Puppeteer and screenshotted above.
 - **End-to-end through the ALB**: catalog → add two items → out-of-stock SKU rejected (409) → checkout (201) → order readable (200) → cart cleared (404). Order `777EC7113D45` present in `shopstack-orders`.
 - **Least privilege proven from inside a pod**: `sts get-caller-identity` from a cart pod = `assumed-role/shopstack-cart/…`; `PutItem` on `shopstack-orders` → `AccessDeniedException`; `DescribeTable` on `shopstack-carts` → `ACTIVE`.
 - **Pod Security**: `kubectl run … --privileged` in the namespace → `Forbidden: violates PodSecurity "restricted:latest"`.
@@ -114,4 +121,4 @@ Roughly $0.25/hour while running: EKS control plane $0.10, two t3.medium $0.083,
 
 ## Production deltas
 
-Deliberately left out to keep the demo small, listed so the gap is explicit: HTTPS on the ALB (ACM cert + `ssl-redirect` annotations are in `k8s/ingress.yaml` as comments), one NAT gateway per AZ, private-only API endpoint, remote Terraform state (S3 backend block in `terraform/versions.tf`), node autoscaling, network policies, and a CD step that runs `scripts/deploy.sh` after the image push.
+Deliberately left out to keep the demo small, listed so the gap is explicit: HTTPS and a custom domain (ACM cert + `ssl-redirect` annotations are in `k8s/ingress.yaml` as comments; the ALB hostname is used as-is), authentication in front of the ALB (`alb.ingress.kubernetes.io/auth-type: oidc` for an internal tool), one NAT gateway per AZ, private-only API endpoint, remote Terraform state (S3 backend block in `terraform/versions.tf`), node autoscaling, network policies, and a CD step that runs `scripts/deploy.sh` after the image push.

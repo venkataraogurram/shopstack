@@ -9,7 +9,7 @@ TF_DIR="$ROOT_DIR/terraform"
 : "${AWS_REGION:=us-east-1}"
 : "${PROJECT:=shopstack}"
 : "${NAMESPACE:=shopstack}"
-SERVICES=(catalog cart order)
+SERVICES=(catalog cart order web)
 
 # Prefer finch (macOS) and fall back to docker.
 if command -v finch >/dev/null 2>&1; then

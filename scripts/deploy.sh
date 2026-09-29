@@ -47,7 +47,7 @@ done
 
 log "waiting for the ALB to answer"
 for _ in $(seq 1 40); do
-  if curl -fsS "http://$ALB/catalog/products" >/dev/null 2>&1; then break; fi
+  if curl -fsS "http://$ALB/" >/dev/null 2>&1; then break; fi
   sleep 10
 done
 

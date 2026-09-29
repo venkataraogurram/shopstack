@@ -14,6 +14,15 @@ RID="smoke-$(date +%s)"
 
 json() { python3 -c "import sys,json; d=json.load(sys.stdin); print($1)"; }
 
+log "storefront"
+code=$(curl -s -o /dev/null -w '%{http_code}' "$BASE/")
+ctype=$(curl -s -o /dev/null -w '%{content_type}' "$BASE/")
+echo "  GET / -> $code ($ctype)"; [ "$code" = "200" ] || die "storefront not serving"
+case "$BASE" in https://*)
+  redirect=$(curl -s -o /dev/null -w '%{http_code} %{redirect_url}' "http://${BASE#https://}/")
+  echo "  http:// -> $redirect"; [[ "$redirect" == 301* ]] || die "expected 301 redirect to HTTPS";;
+esac
+
 log "catalog"
 COUNT=$(curl -fsS "$BASE/catalog/products" | json "len(d)")
 echo "  $COUNT products"

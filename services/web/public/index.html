@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>ShopStack</title>
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand" href="/">
+      <img src="favicon.svg" alt="" width="28" height="28">
+      <span>ShopStack</span>
+    </a>
+    <nav class="topbar-right">
+      <button id="btn-orders" class="link-btn" type="button">Find an order</button>
+      <button id="btn-cart" class="cart-btn" type="button" aria-label="Open cart">
+        Cart <span id="cart-count" class="badge">0</span>
+      </button>
+    </nav>
+  </header>
+
+  <main>
+    <section class="hero">
+      <h1>Everyday essentials, shipped from a Kubernetes cluster.</h1>
+      <p>Catalog, cart and order run as separate services on Amazon EKS behind one Application Load Balancer. Add a few items and check out to see the full flow.</p>
+    </section>
+
+    <section id="products" class="grid" aria-live="polite">
+      <p class="muted">Loading catalog…</p>
+    </section>
+  </main>
+
+  <aside id="cart-panel" class="drawer" hidden>
+    <div class="drawer-head">
+      <h2>Your cart</h2>
+      <button class="icon-btn" data-close type="button" aria-label="Close">×</button>
+    </div>
+    <div id="cart-items" class="drawer-body"></div>
+    <form id="checkout-form" class="drawer-foot">
+      <div class="row">
+        <span>Subtotal</span>
+        <strong id="cart-subtotal">$0.00</strong>
+      </div>
+      <label>
+        Email for the receipt
+        <input id="email" type="email" required placeholder="you@example.com" autocomplete="email">
+      </label>
+      <button id="btn-checkout" class="primary" type="submit" disabled>Place order</button>
+    </form>
+  </aside>
+
+  <aside id="order-panel" class="drawer" hidden>
+    <div class="drawer-head">
+      <h2>Order</h2>
+      <button class="icon-btn" data-close type="button" aria-label="Close">×</button>
+    </div>
+    <div class="drawer-body">
+      <form id="lookup-form" class="lookup">
+        <input id="lookup-id" placeholder="Order ID, e.g. 2069D51001C1" required autocomplete="off">
+        <button type="submit">Look up</button>
+      </form>
+      <div id="order-view"></div>
+    </div>
+  </aside>
+
+  <div id="backdrop" class="backdrop" hidden></div>
+  <div id="toast" class="toast" role="status" hidden></div>
+
+  <footer class="foot">
+    <span>web <code>__APP_VERSION__</code></span>
+    <span>page served by pod <code id="served-by">…</code></span>
+    <span>last API call: <code id="last-call">—</code></span>
+    <a href="https://github.com/venkataraogurram/shopstack" rel="noopener">source on GitHub</a>
+  </footer>
+
+  <script src="app.js" defer></script>
+</body>
+</html>

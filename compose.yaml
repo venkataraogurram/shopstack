@@ -23,3 +23,16 @@ services:
       CART_URL: http://cart:8080
       CATALOG_URL: http://catalog:8080
     depends_on: [cart, catalog]
+
+  # Storefront. Locally there is no ALB doing path routing, so this small
+  # proxy fronts everything on :9080 the same way the ALB does in EKS.
+  web:
+    build: ./services/web
+    depends_on: [catalog, cart, order]
+
+  edge:
+    image: public.ecr.aws/nginx/nginx-unprivileged:1.27-alpine
+    ports: ["9080:8080"]
+    volumes:
+      - ./services/web/nginx/local-edge.conf:/etc/nginx/conf.d/default.conf:ro
+    depends_on: [web]

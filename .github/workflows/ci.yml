@@ -65,6 +65,11 @@ jobs:
       - name: Render Kubernetes manifests
         run: kubectl kustomize k8s > /dev/null
 
+      - name: Nginx config test (web)
+        run: |
+          docker build -q -t shopstack-web:ci services/web
+          docker run --rm shopstack-web:ci nginx -t
+
   build-push:
     name: Build & push (${{ matrix.service }})
     needs: [test, validate-infra]
@@ -76,7 +81,7 @@ jobs:
       id-token: write # required for OIDC federation to AWS
     strategy:
       matrix:
-        service: [catalog, cart, order]
+        service: [catalog, cart, order, web]
     steps:
       - uses: actions/checkout@v4
 

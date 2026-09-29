@@ -1,5 +1,5 @@
 locals {
-  services = toset(["catalog", "cart", "order"])
+  services = toset(["catalog", "cart", "order", "web"])
 }
 
 resource "aws_ecr_repository" "service" {

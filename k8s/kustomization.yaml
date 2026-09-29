@@ -10,6 +10,7 @@ resources:
   - catalog.yaml
   - cart.yaml
   - order.yaml
+  - web.yaml
   - ingress.yaml
 
 # The product list is mounted into the catalog pods; edit config/products.json
