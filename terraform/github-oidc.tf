@@ -23,6 +23,8 @@ resource "aws_iam_openid_connect_provider" "github" {
 
 locals {
   github_oidc_provider_arn = var.create_github_oidc_provider ? aws_iam_openid_connect_provider.github[0].arn : data.aws_iam_openid_connect_provider.github[0].arn
+  github_owner             = split("/", var.github_repository)[0]
+  github_repo_name         = split("/", var.github_repository)[1]
 }
 
 data "aws_iam_policy_document" "github_trust" {
@@ -40,10 +42,16 @@ data "aws_iam_policy_document" "github_trust" {
       values   = ["sts.amazonaws.com"]
     }
 
+    # Repositories created after 2026-07-15 receive an immutable subject that
+    # embeds the owner and repository IDs; older repositories keep the plain
+    # form. Both are accepted so a rename or an opt-in does not lock CI out.
     condition {
       test     = "StringEquals"
       variable = "token.actions.githubusercontent.com:sub"
-      values   = ["repo:${var.github_repository}:ref:refs/heads/main"]
+      values = [
+        "repo:${var.github_repository}:ref:refs/heads/main",
+        "repo:${local.github_owner}@${var.github_owner_id}/${local.github_repo_name}@${var.github_repository_id}:ref:refs/heads/main",
+      ]
     }
   }
 }

@@ -71,3 +71,15 @@ variable "create_github_oidc_provider" {
   type        = bool
   default     = true
 }
+
+variable "github_owner_id" {
+  description = "Numeric GitHub owner ID (gh api users/<owner> -q .id); part of the immutable OIDC subject"
+  type        = number
+  default     = 37859333
+}
+
+variable "github_repository_id" {
+  description = "Numeric GitHub repository ID (gh api repos/<owner>/<repo> -q .id); part of the immutable OIDC subject"
+  type        = number
+  default     = 1395386103
+}

@@ -1,5 +1,7 @@
 # ShopStack — Containerized Retail Microservices on Amazon EKS
 
+[![CI](https://github.com/venkataraogurram/shopstack/actions/workflows/ci.yml/badge.svg)](https://github.com/venkataraogurram/shopstack/actions/workflows/ci.yml)
+
 Three small retail services (**catalog**, **cart**, **order**) built with FastAPI, containerized, and run on Amazon EKS behind an Application Load Balancer. Everything from the VPC to the IAM roles is Terraform; the app is deployed with Kustomize; images are built and pushed by GitHub Actions.
 
 The point of the project is the platform work, not the shop: least-privilege IAM at pod level, hardened pods, autoscaling, and observability wired so that one request ID can be followed through every service in CloudWatch.
@@ -104,6 +106,7 @@ These are the parts I would talk about in an interview.
 1. **Pods rejected by PodSecurity right after `kubectl apply`.** The CloudWatch Observability add-on v6 enables Application Signals *auto-monitor*, whose webhook injects an OpenTelemetry init container into every pod. That container is not `restricted`-compliant, so the ReplicaSets could not create pods. Fix: `manager.applicationSignals.autoMonitor.monitorAllServices=false` in the add-on configuration (Terraform), keeping Container Insights and log shipping.
 2. **`ImagePullBackOff` on tag `dev`.** A placeholder `images:` block in the base `kustomization.yaml` won over the deploy-time overlay. Fix: the base carries no registry or tag; `scripts/deploy.sh` generates the overlay with the immutable SHA tag.
 3. **HPA scale-out stalled at 5/6 with `0/2 nodes are available: Too many pods`.** The default VPC CNI IP-per-pod model caps a t3.medium at 17 pods, and system daemonsets already used most of that. Fix: VPC CNI prefix delegation (`ENABLE_PREFIX_DELEGATION=true`) plus `maxPods: 110` via nodeadm `NodeConfig` in the launch template. Node autoscaling (Karpenter or Cluster Autoscaler) is the next step for a real fleet.
+4. **GitHub Actions could not assume the AWS role: `Not authorized to perform sts:AssumeRoleWithWebIdentity`.** The trust policy matched `repo:owner/name:ref:refs/heads/main`, but repositories created after 2026-07-15 get an [immutable subject](https://github.blog/changelog/2026-04-23-immutable-subject-claims-for-github-actions-oidc-tokens/) that embeds numeric IDs: `repo:owner@<owner-id>/name@<repo-id>:ref:…`. Diagnosed by decoding the token's `sub` claim in the workflow; fixed by accepting both forms in Terraform (`github_owner_id`, `github_repository_id`).
 
 ## Cost
 
